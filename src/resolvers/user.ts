@@ -1,12 +1,12 @@
 import { User } from "../entities/User";
 import { MyContext } from "src/types";
 import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Resolver } from "type-graphql";
-import argon2 from 'argon2';
-import { UserValidation } from "../validations/UserValidation";
+import { UserLoginValidation, UserRegisterValidation } from "../validations/UserValidation";
 import { ValidationState } from "../validations/ValidationState";
+import argon2 from 'argon2';
 
 @InputType()
-export class UsernamePasswordInput {
+export class UsernameInput {
   @Field()
   username: string;
   @Field()
@@ -32,7 +32,6 @@ class FieldError {
 }
 
 const createAPIErrors = (v: ValidationState) => {
-  console.log(Object.keys(v));
   return Object.keys(v).reduce((acc: any, curr: any) => {
     return v[curr].isValid
       ? acc
@@ -46,11 +45,11 @@ export class UserResolver {
 
   @Mutation(() => UserResponse)
   async register(
-    @Arg('options') options: UsernamePasswordInput,
+    @Arg('options') options: UsernameInput,
     @Ctx() { em }: MyContext
   ): Promise<UserResponse | null> {
     const { username, password } = options;
-    const v = UserValidation();
+    const v = UserRegisterValidation();
     const valid = v.validateAll(options);
     if (!valid) {
       return {
@@ -67,30 +66,23 @@ export class UserResolver {
 
   @Mutation(() => UserResponse)
   async login(
-    @Arg('options') options: UsernamePasswordInput,
+    @Arg('options') options: UsernameInput,
     @Ctx() { em }: MyContext
-  ): Promise<UserResponse | undefined> {
+  ): Promise<UserResponse | null> {
     const { username, password } = options;
     const user = await em.findOne(User, { username });
-    if (!user) {
-      return {
-        errors: [{
-          field: 'username',
-          message: "that username doesn't exist",
-        }]
-      }
-    }
-    const valid = await argon2.verify(user.password, password);
+    const v = UserLoginValidation();
+    const valid = v.validateCustom([
+      { key: 'username', value: username, state: user },
+      { key: 'password', value: password, state: user },
+    ], user);
     if (!valid) {
       return {
-        errors: [{
-          field: 'password',
-          message: "incorrect password",
-        }]
+        errors: createAPIErrors(v.validationState),
       }
     }
     return {
-      user,
+      user: user ? user : undefined,
     }
   }
 }

@@ -4,9 +4,14 @@ interface ValidationFunction<S> {
   (val: any, state: S): boolean;
 }
 
+interface AsyncValidationFunction<S> {
+  (val: any, state: S): Promise<boolean>;
+}
+
 interface ValidationProps<S> {
   errorMessage: string;
-  validation: ValidationFunction<S>;
+  validation?: ValidationFunction<S>;
+  asyncValidation?: AsyncValidationFunction<S>;
 }
 
 export interface ValidationSchema<S> {
@@ -108,10 +113,15 @@ export class Validation<S> {
    * @return true/false validation
    */
   private runAllValidators = (property: keyof S, value: any, state: S) => {
-    const runValidator = compose(
-      (func: Function) => func(value, state),
-      prop('validation')
-    );
+    const runValidator = (prop: ValidationProps<S>) => {
+      if (prop.validation) {
+        return prop.validation(value, state);
+      }
+      if (prop.asyncValidation) {
+        return prop.asyncValidation(value, state);
+      }
+      return true;
+    }
     const bools: boolean[] = map(
       runValidator,
       this._validationSchema[property as string]
