@@ -1,0 +1,40 @@
+{
+  "name": "lireddit",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/express": "^4.17.8",
+    "@types/node": "^14.11.1",
+    "nodemon": "^2.0.4",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.3"
+  },
+  "scripts": {
+    "watch": "tsc -w",
+    "dev": "nodemon dist/index.js",
+    "start": "node dist/index.js",
+    "create:migration": "mikro-orm migration:create"
+  },
+  "dependencies": {
+    "@mikro-orm/cli": "^4.0.4",
+    "@mikro-orm/core": "^4.0.4",
+    "@mikro-orm/migrations": "^4.0.4",
+    "@mikro-orm/mysql": "^4.0.4",
+    "apollo-server-express": "^2.17.0",
+    "argon2": "^0.27.0",
+    "class-validator": "^0.12.2",
+    "express": "^4.17.1",
+    "graphql": "^15.3.0",
+    "pg": "^8.3.3",
+    "reflect-metadata": "^0.1.13",
+    "type-graphql": "^1.0.0-rc.3"
+  },
+  "mikro-orm": {
+    "useTsNode": true,
+    "configPaths": [
+      "./src/mikro-orm.config.ts",
+      "./dist/mikro-orm.config.js"
+    ]
+  }
+}
