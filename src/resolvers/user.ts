@@ -49,19 +49,21 @@ export class UserResolver {
     @Ctx() { em }: MyContext
   ): Promise<UserResponse | null> {
     const { username, password } = options;
+
+    // validate user registration
     const v = UserRegisterValidation();
     const valid = v.validateAll(options);
-    if (!valid) {
-      return {
-        errors: createAPIErrors(v.validationState),
-      }
-    }
-    const hash = await argon2.hash(password);
-    const user = em.create(User, { username, password: hash });
-    await em.persistAndFlush(user);
-    return {
-      user
-    };
+
+    return !valid
+      ? { errors: createAPIErrors(v.validationState) }
+      : (async () => {
+        const hash = await argon2.hash(password);
+        const user = em.create(User, { username, password: hash });
+        await em.persistAndFlush(user);
+        return {
+          user
+        };
+      })();
   }
 
   @Mutation(() => UserResponse)
@@ -71,18 +73,16 @@ export class UserResolver {
   ): Promise<UserResponse | null> {
     const { username, password } = options;
     const user = await em.findOne(User, { username });
+
+    // validate user registration
     const v = UserLoginValidation();
     const valid = v.validateCustom([
       { key: 'username', value: username, state: user },
       { key: 'password', value: password, state: user },
     ], user);
-    if (!valid) {
-      return {
-        errors: createAPIErrors(v.validationState),
-      }
-    }
-    return {
-      user: user ? user : undefined,
-    }
+
+    return !valid
+      ? { errors: createAPIErrors(v.validationState) }
+      : { user: user ? user : undefined };
   }
 }
