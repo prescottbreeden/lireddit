@@ -10,6 +10,7 @@ import { ApolloServer } from 'apollo-server-express';
 import { buildSchema } from 'type-graphql';
 import { PostResolver } from './resolvers/post';
 import { UserResolver } from './resolvers/user';
+import cors from 'cors';
 
 const main = async () => {
   const RedisStore = connectRedis(session);
@@ -20,21 +21,28 @@ const main = async () => {
 
   const app = express();
 
-  app.use(
-    session({
-      cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years haha
-        httpOnly: true,
-        sameSite: 'lax', // csrf
-        secure: __prod__, // cookie only works in https
-      },
-      name: 'qid',
-      resave: false,
-      store: new RedisStore({ client: redisClient }),
-      secret: 'dingoes ate my semi-colons',
-      saveUninitialized: false,
-    })
-  );
+  app
+    .use(
+      cors({
+        origin: 'http://localhost:3000',
+        credentials: true,
+      })
+    )
+    .use(
+      session({
+        cookie: {
+          maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years haha
+          httpOnly: true,
+          sameSite: 'lax', // csrf
+          secure: __prod__, // cookie only works in https
+        },
+        name: 'qid',
+        resave: false,
+        store: new RedisStore({ client: redisClient }),
+        secret: 'dingoes ate my semi-colons',
+        saveUninitialized: false,
+      })
+    );
 
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
@@ -43,7 +51,10 @@ const main = async () => {
     }),
     context: ({ req, res }) => ({ db: orm.em, req, res }),
   });
-  apolloServer.applyMiddleware({ app });
+  apolloServer.applyMiddleware({
+    app,
+    cors: false,
+  });
 
   app.listen(4000, () => console.log('server started on localhost:4000'));
 };
