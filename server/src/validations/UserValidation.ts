@@ -3,22 +3,18 @@ import { User } from '../entities/User';
 import { UsernameInput } from '../types';
 import { Validation } from './ValidationState';
 
-export interface RegisterValidations extends UsernameInput {
-  exists: User | null;
-}
-
 export const UserRegisterValidation = () =>
-  new Validation<RegisterValidations>({
-    exists: [
-      {
-        errorMessage: 'Username already exists.',
-        validation: (value: RegisterValidations | null) => value === null,
-      },
-    ],
+  new Validation<UsernameInput>({
     username: [
       {
         errorMessage: 'Username must be greater than 2 characters.',
         validation: (val: string) => val.length > 2,
+      },
+      {
+        errorMessage: 'Username already exists.',
+        validation: (_, exists: UsernameInput | any) => {
+          return exists.createdAt === undefined;
+        },
       },
     ],
     password: [

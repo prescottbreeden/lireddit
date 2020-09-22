@@ -23,10 +23,10 @@ export const InputField: FC<InputFieldProps> = ({
     <FormControl isInvalid={!!error}>
       <FormLabel htmlFor={field.name}>{label ? label : field.name}</FormLabel>
       <Input
-        {...field}
-        {...props}
         id={field.name}
         placeholder={props.placeholder}
+        {...field}
+        {...props}
       />
       {error && <FormErrorMessage>{error}</FormErrorMessage>}
     </FormControl>

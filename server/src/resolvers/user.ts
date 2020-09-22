@@ -2,7 +2,6 @@ import { User } from '../entities/User';
 import { DbContext, UsernameInput, UserResponse } from '../types';
 import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
 import {
-  RegisterValidations,
   UserLoginValidation,
   UserRegisterValidation,
 } from '../validations/UserValidation';
@@ -22,22 +21,31 @@ export class UserResolver {
     @Arg('options') options: UsernameInput,
     @Ctx() { db, req }: DbContext
   ): Promise<UserResponse | null> {
-    const data: RegisterValidations = {
-      ...options,
-      exists: await db.findOne(User, { username: options.username }),
-    };
+    const exists = await db.findOne(User, { username: options.username });
 
     // validate user registration
     const v = UserRegisterValidation();
-    const valid = v.validateAll(data);
+    const valid = v.validateAll(exists ? exists : options);
 
     if (!valid) {
       return { errors: createAPIErrors(v.validationState) };
     }
 
-    const hash = await argon2.hash(data.password);
+    // insert data
+    // const [user] = await (db as EntityManager)
+    //   .createQueryBuilder(User)
+    //   .getKnexQuery()
+    //   .insert({
+    //     username: options.username,
+    //     password: hash,
+    //     created_at: new Date(),
+    //     updated_at: new Date(),
+    //   })
+    //   .returning("*");
+
+    const hash = await argon2.hash(options.password);
     const user = db.create(User, {
-      username: data.username,
+      username: options.username,
       password: hash,
     });
 
