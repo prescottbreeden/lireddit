@@ -1,5 +1,5 @@
-import {FieldError} from "../types";
-import {ValidationState} from "../validations/ValidationState";
+import { FieldError } from '../types';
+import { ValidationState } from '../validations/ValidationState';
 
 /**
  * Creates a random 7 character string.
@@ -81,4 +81,4 @@ export const createAPIErrors = (v: ValidationState) => {
       ? acc
       : [...acc, { field: curr, message: v[curr].error }];
   }, []) as FieldError[];
-}
+};

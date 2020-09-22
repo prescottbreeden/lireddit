@@ -1,5 +1,5 @@
-import {Entity, PrimaryKey, Property} from "@mikro-orm/core";
-import {Field, ObjectType} from "type-graphql";
+import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
+import { Field, ObjectType } from 'type-graphql';
 
 @ObjectType({ description: 'Posts created for lireddit' })
 @Entity()
@@ -13,7 +13,7 @@ export class Post {
   createdAt = new Date();
 
   @Field(() => String)
-  @Property({ type: 'date', onUpdate: () => new Date() }) 
+  @Property({ type: 'date', onUpdate: () => new Date() })
   updatedAt = new Date();
 
   @Field()

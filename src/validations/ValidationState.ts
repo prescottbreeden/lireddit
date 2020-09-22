@@ -40,9 +40,7 @@ export interface ValidationObject<S> {
     value: unknown,
     state: S
   ) => boolean | undefined;
-  validateOnBlur: (
-    state: S
-  ) => (event: any) => unknown;
+  validateOnBlur: (state: S) => (event: any) => unknown;
   validateOnChange: (
     onChange: (event: any) => unknown,
     state: S
@@ -112,7 +110,11 @@ export class Validation<S> {
    * @param value any the value to be tested for validation
    * @return true/false validation
    */
-  private runAllValidators = (property: keyof S, value: any, state: S | null) => {
+  private runAllValidators = (
+    property: keyof S,
+    value: any,
+    state: S | null
+  ) => {
     const validations: ValidationState = {};
     const runValidator = (vProp: ValidationProps<S>) => {
       if (vProp.validation) {
@@ -122,7 +124,7 @@ export class Validation<S> {
         return vProp.asyncValidation(value, state);
       }
       return true;
-    }
+    };
 
     if (state && property in state) {
       const bools: boolean[] = map(

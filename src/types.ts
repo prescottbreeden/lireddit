@@ -1,10 +1,10 @@
-import {Connection, EntityManager, IDatabaseDriver} from "@mikro-orm/core";
-import {Field, InputType, ObjectType} from "type-graphql";
-import {User} from "./entities/User";
+import { Connection, EntityManager, IDatabaseDriver } from '@mikro-orm/core';
+import { Field, InputType, ObjectType } from 'type-graphql';
+import { User } from './entities/User';
 
 export type DbContext = {
   db: EntityManager<any> & EntityManager<IDatabaseDriver<Connection>>;
-}
+};
 
 @InputType()
 export class UsernameInput {
