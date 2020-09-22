@@ -1,6 +1,6 @@
 import { User } from '../entities/User';
 import { DbContext, UsernameInput, UserResponse } from '../types';
-import { Arg, Ctx, Mutation, Resolver } from 'type-graphql';
+import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
 import {
   RegisterValidations,
   UserLoginValidation,
@@ -11,10 +11,16 @@ import argon2 from 'argon2';
 
 @Resolver()
 export class UserResolver {
+  @Query(() => User, { nullable: true })
+  async me(@Ctx() { db, req }: DbContext): Promise<User | null> {
+    const id = Number(req.session!.userId);
+    return isNaN(id) ? null : await db.findOne(User, { id });
+  }
+
   @Mutation(() => UserResponse)
   async register(
     @Arg('options') options: UsernameInput,
-    @Ctx() { db }: DbContext
+    @Ctx() { db, req }: DbContext
   ): Promise<UserResponse | null> {
     const data: RegisterValidations = {
       ...options,
@@ -25,25 +31,28 @@ export class UserResolver {
     const v = UserRegisterValidation();
     const valid = v.validateAll(data);
 
-    return !valid
-      ? { errors: createAPIErrors(v.validationState) }
-      : (async () => {
-          const hash = await argon2.hash(data.password);
-          const user = db.create(User, {
-            username: data.username,
-            password: hash,
-          });
-          await db.persistAndFlush(user);
-          return {
-            user,
-          };
-        })();
+    if (!valid) {
+      return { errors: createAPIErrors(v.validationState) };
+    }
+
+    const hash = await argon2.hash(data.password);
+    const user = db.create(User, {
+      username: data.username,
+      password: hash,
+    });
+
+    await db.persistAndFlush(user);
+    req.session!.userId = user.id;
+
+    return {
+      user,
+    };
   }
 
   @Mutation(() => UserResponse)
   async login(
     @Arg('options') options: UsernameInput,
-    @Ctx() { db }: DbContext
+    @Ctx() { db, req }: DbContext
   ): Promise<UserResponse | null> {
     const { username, password } = options;
     const user = await db.findOne(User, { username });
@@ -60,6 +69,9 @@ export class UserResolver {
 
     return !valid
       ? { errors: createAPIErrors(v.validationState) }
-      : { user: user ? user : undefined };
+      : (() => {
+          req.session!.userId = user!.id;
+          return { user: user ? user : undefined };
+        })();
   }
 }

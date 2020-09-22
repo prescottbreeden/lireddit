@@ -4,6 +4,8 @@ import { User } from './entities/User';
 
 export type DbContext = {
   db: EntityManager<any> & EntityManager<IDatabaseDriver<Connection>>;
+  req: Request & { session?: Express.Session };
+  res: Response;
 };
 
 @InputType()
