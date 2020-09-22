@@ -1,44 +1,9 @@
 import { User } from "../entities/User";
-import { MyContext } from "src/types";
-import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Resolver } from "type-graphql";
-import { UserLoginValidation, UserRegisterValidation } from "../validations/UserValidation";
-import { ValidationState } from "../validations/ValidationState";
+import { DbContext, UsernameInput, UserResponse } from "../types";
+import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
+import { RegisterValidations, UserLoginValidation, UserRegisterValidation } from "../validations/UserValidation";
+import {createAPIErrors} from "../util/utilities";
 import argon2 from 'argon2';
-
-@InputType()
-export class UsernameInput {
-  @Field()
-  username: string;
-  @Field()
-  password: string;
-}
-
-@ObjectType()
-class UserResponse {
-  @Field(() => [FieldError], { nullable: true })
-  errors?: FieldError[];
-
-  @Field(() => User, { nullable: true })
-  user?: User;
-}
-
-@ObjectType()
-class FieldError {
-  @Field()
-  field: string;
-
-  @Field()
-  message: string;
-}
-
-const createAPIErrors = (v: ValidationState) => {
-  return Object.keys(v).reduce((acc: any, curr: any) => {
-    return v[curr].isValid
-      ? acc
-      : [...acc, { field: curr, message: v[curr].error }];
-  }, []) as FieldError[];
-}
-
 
 @Resolver()
 export class UserResolver {
@@ -46,20 +11,26 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async register(
     @Arg('options') options: UsernameInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { db }: DbContext
   ): Promise<UserResponse | null> {
-    const { username, password } = options;
+    const data: RegisterValidations = {
+      ...options,
+      exists: await db.findOne(User, { username: options.username }),
+    }
 
     // validate user registration
     const v = UserRegisterValidation();
-    const valid = v.validateAll(options);
+    const valid = v.validateAll(data);
 
     return !valid
       ? { errors: createAPIErrors(v.validationState) }
       : (async () => {
-        const hash = await argon2.hash(password);
-        const user = em.create(User, { username, password: hash });
-        await em.persistAndFlush(user);
+        const hash = await argon2.hash(data.password);
+        const user = db.create(User, {
+          username: data.username, 
+          password: hash
+        });
+        await db.persistAndFlush(user);
         return {
           user
         };
@@ -69,10 +40,10 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async login(
     @Arg('options') options: UsernameInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { db }: DbContext
   ): Promise<UserResponse | null> {
     const { username, password } = options;
-    const user = await em.findOne(User, { username });
+    const user = await db.findOne(User, { username });
 
     // validate user registration
     const v = UserLoginValidation();

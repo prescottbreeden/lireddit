@@ -1,11 +1,11 @@
 import { compose, prop, map, all } from '../util/utilities';
 
 interface ValidationFunction<S> {
-  (val: any, state: S): boolean;
+  (val: any, state: S | null): boolean;
 }
 
 interface AsyncValidationFunction<S> {
-  (val: any, state: S): Promise<boolean>;
+  (val: any, state: S | null): Promise<boolean>;
 }
 
 interface ValidationProps<S> {
@@ -112,28 +112,34 @@ export class Validation<S> {
    * @param value any the value to be tested for validation
    * @return true/false validation
    */
-  private runAllValidators = (property: keyof S, value: any, state: S) => {
-    const runValidator = (prop: ValidationProps<S>) => {
-      if (prop.validation) {
-        return prop.validation(value, state);
+  private runAllValidators = (property: keyof S, value: any, state: S | null) => {
+    const validations: ValidationState = {};
+    const runValidator = (vProp: ValidationProps<S>) => {
+      if (vProp.validation) {
+        return vProp.validation(value, state);
       }
-      if (prop.asyncValidation) {
-        return prop.asyncValidation(value, state);
+      if (vProp.asyncValidation) {
+        return vProp.asyncValidation(value, state);
       }
       return true;
     }
-    const bools: boolean[] = map(
-      runValidator,
-      this._validationSchema[property as string]
-    );
-    const isValid: boolean = all(bools);
-    const index: number = bools.indexOf(false);
-    const error =
-      index > -1
-        ? this._validationSchema[property as string][index].errorMessage
-        : '';
-    const validations: ValidationState = {};
-    validations[property as string] = { isValid, error };
+
+    if (state && property in state) {
+      const bools: boolean[] = map(
+        runValidator,
+        this._validationSchema[property as string]
+      );
+      const isValid: boolean = all(bools);
+      const index: number = bools.indexOf(false);
+      const error =
+        index > -1
+          ? this._validationSchema[property as string][index].errorMessage
+          : '';
+      validations[property as string] = { isValid, error };
+      return validations;
+    }
+
+    validations[property as string] = { isValid: true, error: '' };
     return validations;
   };
 
@@ -202,8 +208,7 @@ export class Validation<S> {
         state[property as keyof S],
         state
       );
-      acc = { ...acc, ...r };
-      return acc;
+      return { ...acc, ...r };
     }, {});
     this._validationState = newState;
     const result = this.allValid(newState);

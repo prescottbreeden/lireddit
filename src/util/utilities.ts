@@ -1,3 +1,6 @@
+import {FieldError} from "../types";
+import {ValidationState} from "../validations/ValidationState";
+
 /**
  * Creates a random 7 character string.
  * @return string
@@ -71,3 +74,11 @@ const reduceTruthy = (prev: any, current: any) => {
 };
 
 export const all = reduce(reduceTruthy, true);
+
+export const createAPIErrors = (v: ValidationState) => {
+  return Object.keys(v).reduce((acc: any, curr: any) => {
+    return v[curr].isValid
+      ? acc
+      : [...acc, { field: curr, message: v[curr].error }];
+  }, []) as FieldError[];
+}
