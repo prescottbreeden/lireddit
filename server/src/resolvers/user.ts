@@ -1,11 +1,9 @@
 import { User } from '../entities/User';
 import { DbContext, UsernameInput, UserResponse } from '../types';
 import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
-import {
-  UserLoginValidation,
-  UserRegisterValidation,
-} from '../validations/UserValidation';
+import { UserRegisterValidation } from '../validations/UserValidation';
 import { createAPIErrors } from '../util/utilities';
+import { COOKIE_NAME } from '../constants';
 import argon2 from 'argon2';
 
 @Resolver()
@@ -84,5 +82,16 @@ export class UserResolver {
           req.session!.userId = exists!.id;
           return { user: exists ? exists : undefined };
         })();
+  }
+
+  @Mutation(() => Boolean)
+  logout(@Ctx() { req, res }: DbContext) {
+    return new Promise((resolve) =>
+      req.session?.destroy((err) => {
+        res.clearCookie(COOKIE_NAME);
+        err && console.log('something went boom', err);
+        return err ? resolve(false) : resolve(true);
+      })
+    );
   }
 }

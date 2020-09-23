@@ -1,10 +1,10 @@
 import 'reflect-metadata';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import mikroOrmConfig from './mikro-orm.config';
 import redis from 'redis';
 import session from 'express-session';
 import connectRedis from 'connect-redis';
-import { __prod__ } from './constants';
+import { COOKIE_NAME, __prod__ } from './constants';
 import { MikroORM } from '@mikro-orm/core';
 import { ApolloServer } from 'apollo-server-express';
 import { buildSchema } from 'type-graphql';
@@ -36,7 +36,7 @@ const main = async () => {
           sameSite: 'lax', // csrf
           secure: __prod__, // cookie only works in https
         },
-        name: 'qid',
+        name: COOKIE_NAME,
         resave: false,
         store: new RedisStore({ client: redisClient }),
         secret: 'dingoes ate my semi-colons',
@@ -49,7 +49,11 @@ const main = async () => {
       resolvers: [PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res }) => ({ db: orm.em, req, res }),
+    context: ({ req, res }: { req: Request; res: Response }) => ({
+      db: orm.em,
+      req,
+      res,
+    }),
   });
   apolloServer.applyMiddleware({
     app,
