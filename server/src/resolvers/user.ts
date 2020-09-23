@@ -31,18 +31,6 @@ export class UserResolver {
       return { errors: createAPIErrors(v.validationState) };
     }
 
-    // insert data
-    // const [user] = await (db as EntityManager)
-    //   .createQueryBuilder(User)
-    //   .getKnexQuery()
-    //   .insert({
-    //     username: options.username,
-    //     password: hash,
-    //     created_at: new Date(),
-    //     updated_at: new Date(),
-    //   })
-    //   .returning("*");
-
     const hash = await argon2.hash(options.password);
     const user = db.create(User, {
       username: options.username,
@@ -62,24 +50,39 @@ export class UserResolver {
     @Arg('options') options: UsernameInput,
     @Ctx() { db, req }: DbContext
   ): Promise<UserResponse | null> {
-    const { username, password } = options;
-    const user = await db.findOne(User, { username });
+    const exists = await db.findOne(User, { username: options.username });
 
-    // validate user registration
-    const v = UserLoginValidation();
-    const valid = v.validateCustom(
-      [
-        { key: 'username', value: username, state: user },
-        { key: 'password', value: password, state: user },
-      ],
-      user
-    );
+    let valid = true;
+    const validationState = {
+      username: {
+        isValid: false,
+        error: '',
+      },
+      password: {
+        isValid: false,
+        error: '',
+      },
+    };
+
+    if (!exists) {
+      valid = false;
+      validationState.username.error = 'Could not find username.';
+    } else {
+      const validPassword = await argon2
+        .verify(exists.password, options.password)
+        .catch(() => Promise.resolve(false));
+
+      if (!validPassword) {
+        valid = false;
+        validationState.password.error = 'Incorrect Password.';
+      }
+    }
 
     return !valid
-      ? { errors: createAPIErrors(v.validationState) }
+      ? { errors: createAPIErrors(validationState) }
       : (() => {
-          req.session!.userId = user!.id;
-          return { user: user ? user : undefined };
+          req.session!.userId = exists!.id;
+          return { user: exists ? exists : undefined };
         })();
   }
 }

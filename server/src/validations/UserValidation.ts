@@ -1,5 +1,4 @@
 import argon2 from 'argon2';
-import { User } from '../entities/User';
 import { UsernameInput } from '../types';
 import { Validation } from './ValidationState';
 
@@ -26,18 +25,25 @@ export const UserRegisterValidation = () =>
   });
 
 export const UserLoginValidation = () =>
-  new Validation<any>({
+  new Validation<UsernameInput>({
     username: [
       {
         errorMessage: 'Could not find username.',
-        validation: (_, state: UsernameInput) => state !== null,
+        validation: (_, exists: UsernameInput | any) => {
+          return exists.createdAt !== undefined;
+        },
       },
     ],
     password: [
       {
         errorMessage: 'Incorrect Password.',
-        asyncValidation: (password: string, user: User) => {
-          return argon2.verify(user.password, password);
+        asyncValidation: async (
+          password: string,
+          exists: UsernameInput | any
+        ) => {
+          return await argon2
+            .verify(exists.password, password)
+            .catch(() => Promise.resolve(false));
         },
       },
     ],
