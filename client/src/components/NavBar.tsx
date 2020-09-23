@@ -32,18 +32,16 @@ export const NavBar: FC<NavBarProps> = ({}) => {
   } else {
     body = (
       <Flex>
-        <Box mr={4} color="white">
+        <Box mr={4}>
           <p>{data.me.username}</p>
         </Box>
-        <Box color="white">
-          <Button variant="link">Logout</Button>
-        </Box>
+        <Button variant="link">Logout</Button>
       </Flex>
     );
   }
 
   return (
-    <Flex bg="black" p={4}>
+    <Flex bg="tan" p={4}>
       <Box ml={"auto"}>{body}</Box>
     </Flex>
   );
