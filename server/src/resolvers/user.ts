@@ -1,8 +1,7 @@
 import { User } from '../entities/User';
 import { DbContext, UserInput, UserResponse } from '../types';
 import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
-import { UserRegisterValidation } from '../validations/UserValidation';
-import { createAPIErrors } from '../util/utilities';
+import { createAPIErrors, validEmail } from '../util/utilities';
 import { COOKIE_NAME } from '../constants';
 import argon2 from 'argon2';
 
@@ -15,6 +14,7 @@ export class UserResolver {
   ) {
     const id = req.session?.id ? Number(req.session.id) : 0;
     const user = await db.findOne(User, { id });
+    return true;
   }
 
   @Query(() => User, { nullable: true })
@@ -28,23 +28,64 @@ export class UserResolver {
     @Arg('options') options: UserInput,
     @Ctx() { db, req }: DbContext
   ): Promise<UserResponse | null> {
-    const exists = await db.findOne(User, { username: options.username });
+    let valid = true;
+    const validationState = {
+      username: {
+        isValid: false,
+        error: '',
+      },
+      password: {
+        isValid: false,
+        error: '',
+      },
+      email: {
+        isValid: false,
+        error: '',
+      },
+    };
 
-    // validate user registration
-    const v = UserRegisterValidation();
-    const valid = v.validateAll(exists ? exists : options);
+    const usernameExists = await db.findOne(User, {
+      username: options.username,
+    });
+    const emailExists = await db.findOne(User, { email: options.email });
+
+    // username validations
+    if (usernameExists) {
+      valid = false;
+      validationState.username.error = 'Username already exists.';
+    }
+    if (options.username.trim().length < 2) {
+      valid = false;
+      validationState.username.error = 'Username must be longer than 2.';
+    }
+
+    // password validations
+    if (options.password.trim() === 'password') {
+      valid = false;
+      validationState.password.error = 'Password cannot be password.';
+    }
+
+    // email validations
+    if (emailExists) {
+      valid = false;
+      validationState.email.error = 'Email already exists.';
+    }
+    if (!validEmail(options.email.trim())) {
+      valid = false;
+      validationState.email.error = 'Email is not valid.';
+    }
 
     if (!valid) {
-      return { errors: createAPIErrors(v.validationState) };
+      return { errors: createAPIErrors(validationState) };
     }
 
     const hash = await argon2.hash(options.password);
     const user = db.create(User, {
-      username: options.username,
+      ...options,
       password: hash,
     });
 
-    await db.persistAndFlush(user);
+    await db.persistAndFlush(user).catch(console.error);
     req.session!.userId = user.id;
 
     return {

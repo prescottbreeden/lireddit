@@ -13,8 +13,10 @@ export type DbContext = {
 export class UserInput {
   @Field()
   username: string;
+
   @Field()
   password: string;
+
   @Field()
   email: string;
 }

@@ -18,7 +18,7 @@ export const Register: FC<RegisterProps> = ({}) => {
   return (
     <Wrapper>
       <Formik
-        initialValues={{ username: "", password: "" }}
+        initialValues={{ username: "", password: "", email: "" }}
         onSubmit={async (values, { setErrors }) => {
           const response = await register({ options: values });
           return response.data?.register.errors
@@ -31,6 +31,9 @@ export const Register: FC<RegisterProps> = ({}) => {
             <InputField name="username" />
             <Box mt={4}>
               <InputField name="password" type="password" />
+            </Box>
+            <Box mt={4}>
+              <InputField name="email" />
             </Box>
             <Button
               isLoading={isSubmitting}

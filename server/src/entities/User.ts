@@ -17,13 +17,13 @@ export class User {
   updatedAt = new Date();
 
   @Field()
-  @Property({ type: 'text', unique: true })
+  @Property({ type: 'string', unique: true })
   username!: string;
 
-  @Property({ type: 'text' })
-  password!: string;
-
   @Field()
-  @Property({ type: 'text', unique: true })
+  @Property({ type: 'string', unique: true })
   email!: string;
+
+  @Property({ type: 'string' })
+  password!: string;
 }

@@ -18,7 +18,7 @@ export const Login: FC<LoginProps> = ({}) => {
   return (
     <Wrapper>
       <Formik
-        initialValues={{ username: "", password: "" }}
+        initialValues={{ username: "", password: "", email: "" }}
         onSubmit={async (values, { setErrors }) => {
           const response = await register({ options: values });
           return response.data?.login.errors
