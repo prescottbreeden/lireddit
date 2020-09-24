@@ -78,7 +78,8 @@ export type MutationRegisterArgs = {
 };
 
 export type MutationLoginArgs = {
-  options: UserInput;
+  password: Scalars["String"];
+  usernameOrEmail: Scalars["String"];
 };
 
 export type UserResponse = {
@@ -101,11 +102,12 @@ export type UserInput = {
 
 export type RegularUserFragment = { __typename?: "User" } & Pick<
   User,
-  "id" | "username"
+  "id" | "username" | "email"
 >;
 
 export type LoginMutationVariables = Exact<{
-  options: UserInput;
+  usernameOrEmail: Scalars["String"];
+  password: Scalars["String"];
 }>;
 
 export type LoginMutation = { __typename?: "Mutation" } & {
@@ -115,7 +117,7 @@ export type LoginMutation = { __typename?: "Mutation" } & {
         { __typename?: "FieldError" } & Pick<FieldError, "field" | "message">
       >
     >;
-    user?: Maybe<{ __typename?: "User" } & RegularUserFragment>;
+    user?: Maybe<{ __typename?: "User" } & Pick<User, "id" | "username">>;
   };
 };
 
@@ -162,21 +164,22 @@ export const RegularUserFragmentDoc = gql`
   fragment RegularUser on User {
     id
     username
+    email
   }
 `;
 export const LoginDocument = gql`
-  mutation Login($options: UserInput!) {
-    login(options: $options) {
+  mutation Login($usernameOrEmail: String!, $password: String!) {
+    login(usernameOrEmail: $usernameOrEmail, password: $password) {
       errors {
         field
         message
       }
       user {
-        ...RegularUser
+        id
+        username
       }
     }
   }
-  ${RegularUserFragmentDoc}
 `;
 
 export function useLoginMutation() {

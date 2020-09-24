@@ -95,14 +95,17 @@ export class UserResolver {
 
   @Mutation(() => UserResponse)
   async login(
-    @Arg('options') options: UserInput,
+    @Arg('usernameOrEmail') usernameOrEmail: string,
+    @Arg('password') password: string,
     @Ctx() { db, req }: DbContext
   ): Promise<UserResponse | null> {
-    const exists = await db.findOne(User, { username: options.username });
+    const exists = usernameOrEmail.includes('@')
+      ? await db.findOne(User, { email: usernameOrEmail })
+      : await db.findOne(User, { username: usernameOrEmail });
 
     let valid = true;
     const validationState = {
-      username: {
+      usernameOrEmail: {
         isValid: false,
         error: '',
       },
@@ -114,10 +117,10 @@ export class UserResolver {
 
     if (!exists) {
       valid = false;
-      validationState.username.error = 'Could not find username.';
+      validationState.usernameOrEmail.error = 'Could not find username.';
     } else {
       const validPassword = await argon2
-        .verify(exists.password, options.password)
+        .verify(exists.password, password)
         .catch(() => Promise.resolve(false));
 
       if (!validPassword) {
