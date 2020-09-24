@@ -10,11 +10,13 @@ export type DbContext = {
 };
 
 @InputType()
-export class UsernameInput {
+export class UserInput {
   @Field()
   username: string;
   @Field()
   password: string;
+  @Field()
+  email: string;
 }
 
 @ObjectType()

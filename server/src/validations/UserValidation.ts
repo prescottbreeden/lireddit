@@ -1,9 +1,9 @@
 import argon2 from 'argon2';
-import { UsernameInput } from '../types';
+import { UserInput } from '../types';
 import { Validation } from './ValidationState';
 
 export const UserRegisterValidation = () =>
-  new Validation<UsernameInput>({
+  new Validation<UserInput>({
     username: [
       {
         errorMessage: 'Username must be greater than 2 characters.',
@@ -11,7 +11,7 @@ export const UserRegisterValidation = () =>
       },
       {
         errorMessage: 'Username already exists.',
-        validation: (_, exists: UsernameInput | any) => {
+        validation: (_, exists: UserInput | any) => {
           return exists.createdAt === undefined;
         },
       },
@@ -25,11 +25,11 @@ export const UserRegisterValidation = () =>
   });
 
 export const UserLoginValidation = () =>
-  new Validation<UsernameInput>({
+  new Validation<UserInput>({
     username: [
       {
         errorMessage: 'Could not find username.',
-        validation: (_, exists: UsernameInput | any) => {
+        validation: (_, exists: UserInput | any) => {
           return exists.createdAt !== undefined;
         },
       },
@@ -37,10 +37,7 @@ export const UserLoginValidation = () =>
     password: [
       {
         errorMessage: 'Incorrect Password.',
-        asyncValidation: async (
-          password: string,
-          exists: UsernameInput | any
-        ) => {
+        asyncValidation: async (password: string, exists: UserInput | any) => {
           return await argon2
             .verify(exists.password, password)
             .catch(() => Promise.resolve(false));

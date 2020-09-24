@@ -1,5 +1,5 @@
 import { User } from '../entities/User';
-import { DbContext, UsernameInput, UserResponse } from '../types';
+import { DbContext, UserInput, UserResponse } from '../types';
 import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
 import { UserRegisterValidation } from '../validations/UserValidation';
 import { createAPIErrors } from '../util/utilities';
@@ -8,6 +8,15 @@ import argon2 from 'argon2';
 
 @Resolver()
 export class UserResolver {
+  @Mutation(() => Boolean)
+  async forgotPassword(
+    @Arg('email') email: string,
+    @Ctx() { db, req }: DbContext
+  ) {
+    const id = req.session?.id ? Number(req.session.id) : 0;
+    const user = await db.findOne(User, { id });
+  }
+
   @Query(() => User, { nullable: true })
   async me(@Ctx() { db, req }: DbContext): Promise<User | null> {
     const id = Number(req.session!.userId);
@@ -16,7 +25,7 @@ export class UserResolver {
 
   @Mutation(() => UserResponse)
   async register(
-    @Arg('options') options: UsernameInput,
+    @Arg('options') options: UserInput,
     @Ctx() { db, req }: DbContext
   ): Promise<UserResponse | null> {
     const exists = await db.findOne(User, { username: options.username });
@@ -45,7 +54,7 @@ export class UserResolver {
 
   @Mutation(() => UserResponse)
   async login(
-    @Arg('options') options: UsernameInput,
+    @Arg('options') options: UserInput,
     @Ctx() { db, req }: DbContext
   ): Promise<UserResponse | null> {
     const exists = await db.findOne(User, { username: options.username });

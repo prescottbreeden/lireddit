@@ -4,7 +4,7 @@ interface WrapperProps {
   variant: "small" | "regular";
 }
 
-export const Wrapper = ({ children, variant = "regular" }) => {
+export const Wrapper = ({ children, variant = "regular" }: any) => {
   return (
     <Box
       mt={8}

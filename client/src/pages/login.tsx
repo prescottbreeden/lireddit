@@ -47,4 +47,4 @@ export const Login: FC<LoginProps> = ({}) => {
   );
 };
 
-export default withUrqlClient(createUrqlClient, { ssr: false })(Login);
+export default withUrqlClient(createUrqlClient)(Login);

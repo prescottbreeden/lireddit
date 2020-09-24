@@ -42,6 +42,7 @@ export type User = {
   createdAt: Scalars["String"];
   updatedAt: Scalars["String"];
   username: Scalars["String"];
+  email: Scalars["String"];
 };
 
 export type Mutation = {
@@ -49,6 +50,7 @@ export type Mutation = {
   createPost: Post;
   updatePost: Post;
   deletePost: Post;
+  forgotPassword: Scalars["Boolean"];
   register: UserResponse;
   login: UserResponse;
   logout: Scalars["Boolean"];
@@ -67,12 +69,16 @@ export type MutationDeletePostArgs = {
   id: Scalars["Float"];
 };
 
+export type MutationForgotPasswordArgs = {
+  email: Scalars["String"];
+};
+
 export type MutationRegisterArgs = {
-  options: UsernameInput;
+  options: UserInput;
 };
 
 export type MutationLoginArgs = {
-  options: UsernameInput;
+  options: UserInput;
 };
 
 export type UserResponse = {
@@ -87,9 +93,10 @@ export type FieldError = {
   message: Scalars["String"];
 };
 
-export type UsernameInput = {
+export type UserInput = {
   username: Scalars["String"];
   password: Scalars["String"];
+  email: Scalars["String"];
 };
 
 export type RegularUserFragment = { __typename?: "User" } & Pick<
@@ -98,7 +105,7 @@ export type RegularUserFragment = { __typename?: "User" } & Pick<
 >;
 
 export type LoginMutationVariables = Exact<{
-  options: UsernameInput;
+  options: UserInput;
 }>;
 
 export type LoginMutation = { __typename?: "Mutation" } & {
@@ -120,7 +127,7 @@ export type LogoutMutation = { __typename?: "Mutation" } & Pick<
 >;
 
 export type RegisterMutationVariables = Exact<{
-  options: UsernameInput;
+  options: UserInput;
 }>;
 
 export type RegisterMutation = { __typename?: "Mutation" } & {
@@ -158,7 +165,7 @@ export const RegularUserFragmentDoc = gql`
   }
 `;
 export const LoginDocument = gql`
-  mutation Login($options: UsernameInput!) {
+  mutation Login($options: UserInput!) {
     login(options: $options) {
       errors {
         field
@@ -187,7 +194,7 @@ export function useLogoutMutation() {
   );
 }
 export const RegisterDocument = gql`
-  mutation Register($options: UsernameInput!) {
+  mutation Register($options: UserInput!) {
     register(options: $options) {
       errors {
         field
