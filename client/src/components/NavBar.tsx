@@ -11,12 +11,8 @@ export const NavBar: FC<NavBarProps> = ({}) => {
   const [{ fetching: logoutFetch }, logout] = useLogoutMutation();
   let body = null;
 
-  // data is loading
-  if (fetching) {
-    body = <p>loading</p>;
-
-    // user not logged in
-  } else if (!data?.me) {
+  // user not logged in
+  if (!data?.me) {
     body = (
       <>
         <NextLink href="/login">

@@ -23,7 +23,8 @@ export const Register: FC<RegisterProps> = ({}) => {
           const response = await register({ options: values });
           return response.data?.register.errors
             ? setErrors(toErrorMap(response.data.register.errors))
-            : router.push("/");
+            : console.log("no errors");
+          /* : router.push("/"); */
         }}
       >
         {({ isSubmitting }) => (
