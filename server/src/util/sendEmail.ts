@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { KEYS } from 'src/keys';
 
 export async function sendEmail(to: string, html: string) {
   // const testAccount = await nodemailer.createTestAccount();
@@ -8,10 +9,7 @@ export async function sendEmail(to: string, html: string) {
     host: 'smtp.ethereal.email',
     port: 587,
     secure: false,
-    auth: {
-      user: 'xem2e3thi6rq5va4@ethereal.email',
-      pass: 'SQE79CV1KU3zdC8gCd',
-    },
+    auth: {},
   });
 
   const info = await transporter.sendMail({
@@ -19,6 +17,7 @@ export async function sendEmail(to: string, html: string) {
     to: to,
     subject: 'Change password',
     html,
+    ...KEYS.nodemailer,
   });
 
   console.log('Message sent: %s', info.messageId);

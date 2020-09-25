@@ -3,6 +3,7 @@ import { Post } from './entities/Post';
 import { MikroORM } from '@mikro-orm/core';
 import { User } from './entities/User';
 import path from 'path';
+import { KEYS } from './keys';
 
 export default {
   migrations: {
@@ -12,7 +13,6 @@ export default {
   entities: [Post, User],
   type: 'mysql',
   dbName: 'lireddit',
-  user: 'trashpanda',
-  password: 'rubberbabybuggybumpers',
+  ...KEYS.db,
   debug: !__prod__,
 } as Parameters<typeof MikroORM.init>[0];
