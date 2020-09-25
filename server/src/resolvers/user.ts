@@ -4,6 +4,8 @@ import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
 import { createAPIErrors } from '../util/utilities';
 import { COOKIE_NAME } from '../constants';
 import { registerValidations } from '../validations/definitions/registerValidations';
+import { loginValidations } from '../validations/definitions/loginValidations';
+import { trimData } from '../util/normalizeData';
 import argon2 from 'argon2';
 
 @Resolver()
@@ -29,12 +31,13 @@ export class UserResolver {
     @Arg('options') options: UserInput,
     @Ctx() { db, req }: DbContext
   ): Promise<UserResponse | null> {
-    const { username, email, password } = options;
-    const v = registerValidations();
+    const data = trimData(options);
+    const { username, email, password } = data;
 
     const usernameExists = await db.findOne(User, { username });
     const emailExists = await db.findOne(User, { email });
 
+    const v = registerValidations();
     const valid = v.validateCustom([
       { key: 'username', value: username, state: usernameExists },
       { key: 'email', value: email, state: emailExists },
@@ -45,7 +48,7 @@ export class UserResolver {
       return { errors: createAPIErrors(v.validationState) };
     }
 
-    const hash = await argon2.hash(password);
+    const hash = await argon2.hash(password.trim());
     const user = db.create(User, {
       ...options,
       password: hash,
@@ -69,34 +72,20 @@ export class UserResolver {
       ? await db.findOne(User, { email: usernameOrEmail })
       : await db.findOne(User, { username: usernameOrEmail });
 
-    let valid = true;
-    const validationState = {
-      usernameOrEmail: {
-        isValid: false,
-        error: '',
-      },
-      password: {
-        isValid: false,
-        error: '',
-      },
-    };
+    const validPassword = exists
+      ? await argon2
+          .verify(exists.password, password)
+          .catch(() => Promise.resolve(false))
+      : true;
 
-    if (!exists) {
-      valid = false;
-      validationState.usernameOrEmail.error = 'Could not find username.';
-    } else {
-      const validPassword = await argon2
-        .verify(exists.password, password)
-        .catch(() => Promise.resolve(false));
-
-      if (!validPassword) {
-        valid = false;
-        validationState.password.error = 'Incorrect Password.';
-      }
-    }
+    const v = loginValidations();
+    const valid = v.validateCustom([
+      { key: 'usernameOrEmail', value: null, state: exists },
+      { key: 'password', value: validPassword, state: null },
+    ]);
 
     return !valid
-      ? { errors: createAPIErrors(validationState) }
+      ? { errors: createAPIErrors(v.validationState) }
       : (() => {
           req.session!.userId = exists!.id;
           return { user: exists ? exists : undefined };
