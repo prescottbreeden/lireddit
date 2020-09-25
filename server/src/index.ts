@@ -9,16 +9,15 @@ import { UserResolver } from './resolvers/user';
 import connectRedis from 'connect-redis';
 import cors from 'cors';
 import mikroOrmConfig from './mikro-orm.config';
-import redis from 'redis';
+import Redis from 'ioredis';
 import session from 'express-session';
 
 const main = async () => {
-  const RedisStore = connectRedis(session);
-  const redisClient = redis.createClient();
+  const app = express();
 
   const orm = await MikroORM.init(mikroOrmConfig);
-
-  const app = express();
+  const RedisStore = connectRedis(session);
+  const redis = new Redis();
 
   app
     .use(
@@ -37,7 +36,7 @@ const main = async () => {
         },
         name: COOKIE_NAME,
         resave: false,
-        store: new RedisStore({ client: redisClient }),
+        store: new RedisStore({ client: redis }),
         secret: 'dingoes ate my semi-colons',
         saveUninitialized: false,
       })

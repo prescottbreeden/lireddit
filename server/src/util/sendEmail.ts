@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { KEYS } from 'src/keys';
+import { KEYS } from '../keys';
 
 export async function sendEmail(to: string, html: string) {
   // const testAccount = await nodemailer.createTestAccount();

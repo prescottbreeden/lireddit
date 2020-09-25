@@ -2,10 +2,12 @@ import { User } from '../entities/User';
 import { DbContext, UserInput, UserResponse } from '../types';
 import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
 import { createAPIErrors } from '../util/utilities';
-import { COOKIE_NAME } from '../constants';
+import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from '../constants';
 import { registerValidations } from '../validations/definitions/registerValidations';
 import { loginValidations } from '../validations/definitions/loginValidations';
 import { trimData } from '../util/normalizeData';
+import { sendEmail } from '../util/sendEmail';
+import { v4 } from 'uuid';
 import argon2 from 'argon2';
 
 @Resolver()
@@ -13,10 +15,28 @@ export class UserResolver {
   @Mutation(() => Boolean)
   async forgotPassword(
     @Arg('email') email: string,
-    @Ctx() { db, req }: DbContext
+    @Ctx() { db, redis, req }: DbContext
   ) {
     const id = req.session?.id ? Number(req.session.id) : 0;
     const user = await db.findOne(User, { id });
+    if (!user) {
+      // email is not in the db
+      return true;
+    }
+
+    const token = v4();
+    await redis.set(
+      FORGET_PASSWORD_PREFIX + token,
+      user.id,
+      'ex',
+      1000 * 60 * 60
+    );
+
+    await sendEmail(
+      email,
+      `<a href="http://localhost:3000/change-password/${token}">Reset Password</a>`
+    );
+
     return true;
   }
 
