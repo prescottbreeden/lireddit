@@ -40,4 +40,12 @@ export const registerValidations = () =>
         },
       },
     ],
+    token: [
+      {
+        errorMessage: 'Invalid User Credentials',
+        validation: (redisId: number, user: User | null) => {
+          return user ? user.id === redisId : false;
+        },
+      },
+    ],
   });

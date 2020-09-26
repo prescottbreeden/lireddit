@@ -6,8 +6,8 @@ export const loginValidations = () =>
     usernameOrEmail: [
       {
         errorMessage: 'Could not find username or email.',
-        validation: (_, dbData: User | null) => {
-          return dbData !== null;
+        validation: (user: User | null, _) => {
+          return user !== null;
         },
       },
     ],

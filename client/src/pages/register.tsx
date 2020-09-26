@@ -21,10 +21,14 @@ export const Register: FC<RegisterProps> = ({}) => {
         initialValues={{ username: "", password: "", email: "" }}
         onSubmit={async (values, { setErrors }) => {
           const response = await register({ options: values });
-          return response.data?.register.errors
-            ? setErrors(toErrorMap(response.data.register.errors))
-            : console.log("no errors");
-          /* : router.push("/"); */
+          if (response.error) {
+            console.log("api blew up");
+            // dispatch api error
+          } else {
+            return response.data?.register.errors
+              ? setErrors(toErrorMap(response.data.register.errors))
+              : router.push("/");
+          }
         }}
       >
         {({ isSubmitting }) => (

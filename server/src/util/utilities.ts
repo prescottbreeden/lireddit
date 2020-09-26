@@ -1,5 +1,3 @@
-import { FieldError } from '../types';
-
 /**
  * Creates a random 7 character string.
  * @return string
@@ -73,14 +71,6 @@ const reduceTruthy = (prev: any, current: any) => {
 };
 
 export const all = reduce(reduceTruthy, true);
-
-export const createAPIErrors = (v: any) => {
-  return Object.keys(v).reduce((acc: any, curr: any) => {
-    return v[curr].isValid
-      ? acc
-      : [...acc, { field: curr, message: v[curr].error }];
-  }, []) as FieldError[];
-};
 
 export const validEmail = (email: string) => {
   const validEmailRegex = /^(([^<>()\\[\]\\.,;:\s@"]+(\.[^<>()\\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
