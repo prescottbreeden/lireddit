@@ -3,7 +3,7 @@ full stack typescript project with:
 - mysql
 - redis
 - express
-- mikro-orm
+- typeorm
 - apollo-server
 - graphQL
 - urql
