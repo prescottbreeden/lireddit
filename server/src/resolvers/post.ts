@@ -1,56 +1,44 @@
 import { Post } from '../entities/Post';
-import { DbContext } from '../types';
-import { Int, Arg, Ctx, Query, Resolver, Mutation } from 'type-graphql';
+import { Int, Arg, Query, Resolver, Mutation } from 'type-graphql';
 
 @Resolver()
 export class PostResolver {
   @Query(() => [Post], { description: 'Get all the posts.' })
-  async posts(@Ctx() { db }: DbContext): Promise<Post[]> {
-    return await db.find(Post, {});
+  async posts(): Promise<Post[]> {
+    return await Post.find();
   }
 
   @Query(() => Post, { nullable: true })
-  async post(
-    @Arg('id', () => Int) id: number,
-    @Ctx() { db }: DbContext
-  ): Promise<Post | null> {
-    return await db.findOne(Post, { id });
+  async post(@Arg('id', () => Int) id: number): Promise<Post | undefined> {
+    return await Post.findOne(id);
   }
 
   @Mutation(() => Post)
-  async createPost(
-    @Arg('title') title: string,
-    @Ctx() { db }: DbContext
-  ): Promise<Post | null> {
-    const post = db.create(Post, { title });
-    await db.persistAndFlush(post);
+  async createPost(@Arg('title') title: string): Promise<Post | undefined> {
+    // 2 sql queries
+    const post = Post.create({ title }).save();
     return post;
   }
 
   @Mutation(() => Post)
   async updatePost(
     @Arg('id') id: number,
-    @Arg('title', () => String, { nullable: true }) title: string,
-    @Ctx() { db }: DbContext
-  ): Promise<Post | null> {
-    const post = await db.findOne(Post, { id });
+    @Arg('title', () => String, { nullable: true }) title: string
+  ): Promise<Post | undefined> {
+    const post = await Post.findOne(id);
     if (!post) {
-      return null;
+      return undefined;
     }
     if (typeof title !== 'undefined') {
-      post.title = title;
-      await db.persistAndFlush(post);
+      await Post.update({ id }, { title });
     }
     return post;
   }
 
   @Mutation(() => Post)
-  async deletePost(
-    @Arg('id') id: number,
-    @Ctx() { db }: DbContext
-  ): Promise<Post | null> {
-    const post = await db.findOne(Post, { id });
-    await db.nativeDelete(Post, { id });
+  async deletePost(@Arg('id') id: number): Promise<Post | undefined> {
+    const post = await Post.findOne(id);
+    await Post.delete(id);
     return post;
   }
 }

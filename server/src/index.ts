@@ -1,21 +1,31 @@
 import 'reflect-metadata';
 import express, { Request, Response } from 'express';
 import { COOKIE_NAME, __prod__ } from './constants';
-import { MikroORM } from '@mikro-orm/core';
 import { ApolloServer } from 'apollo-server-express';
 import { buildSchema } from 'type-graphql';
 import { PostResolver } from './resolvers/post';
 import { UserResolver } from './resolvers/user';
+import { createConnection } from 'typeorm';
+import { User } from './entities/User';
+import { Post } from './entities/Post';
+import { KEYS } from './keys';
 import connectRedis from 'connect-redis';
 import cors from 'cors';
-import mikroOrmConfig from './mikro-orm.config';
 import Redis from 'ioredis';
 import session from 'express-session';
 
 const main = async () => {
   const app = express();
 
-  const orm = await MikroORM.init(mikroOrmConfig);
+  const conn = await createConnection({
+    type: 'mysql',
+    database: 'lireddit2',
+    ...KEYS.db,
+    logging: true,
+    synchronize: true,
+    entities: [User, Post],
+  });
+
   const RedisStore = connectRedis(session);
   const redis = new Redis();
 
@@ -48,7 +58,6 @@ const main = async () => {
       validate: false,
     }),
     context: ({ req, res }: { req: Request; res: Response }) => ({
-      db: orm.em,
       req,
       res,
       redis,

@@ -1,6 +1,6 @@
 import { User } from '../entities/User';
-import { DbContext, UserInput, UserResponse, EM } from '../types';
-import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
+import { MyContext, UserInput, UserResponse } from '../types';
+import { Arg, Mutation, Query, Resolver, Ctx } from 'type-graphql';
 import { createAPIErrors } from '../util/createApiErrors';
 import { COOKIE_NAME, FORGET_PASSWORD_PREFIX } from '../constants';
 import { registerValidations } from '../validations/definitions/registerValidations';
@@ -24,21 +24,21 @@ export class UserResolver {
 
   /**
    *  Returns the currently logged in user or null.
-   *  @param db orm entity manager
+   *  @param User.orm entity manager
    *  @param req express request object
    *  @return User or null
    */
-  private getLoggedInUser = async (db: EM, req: Request) => {
+  private getLoggedInUser = async (req: Request) => {
     const id = this.getLoggedInUserID(req);
-    return await db.findOne(User, { id });
+    return await User.findOne(id);
   };
 
   // ----------------------------------------------------------------------- //
   // Q . me: () -> User | null
   // ----------------------------------------------------------------------- //
   @Query(() => User, { nullable: true })
-  async me(@Ctx() { db, req }: DbContext): Promise<User | null> {
-    return await this.getLoggedInUser(db, req);
+  me(@Ctx() { req }: MyContext): Promise<User | undefined> {
+    return this.getLoggedInUser(req);
   }
 
   // ----------------------------------------------------------------------- //
@@ -47,13 +47,15 @@ export class UserResolver {
   @Mutation(() => UserResponse)
   async register(
     @Arg('options') options: UserInput,
-    @Ctx() { db, req }: DbContext
-  ): Promise<UserResponse | null> {
+    @Ctx() { req }: MyContext
+  ): Promise<UserResponse | undefined> {
     const data = trimData(options);
     const { username, email, password } = data;
 
-    const usernameExists = await db.findOne(User, { username });
-    const emailExists = await db.findOne(User, { email });
+    const usernameExists = await User.findOne({ username });
+    const emailExists = await User.findOne({ email });
+    console.log('uname: ', usernameExists);
+    console.log('email: ', emailExists);
 
     const v = registerValidations();
     const valid = v.validateCustom([
@@ -67,12 +69,11 @@ export class UserResolver {
     }
 
     const hash = await argon2.hash(password.trim());
-    const user = db.create(User, {
+    const user = await User.create({
       ...options,
       password: hash,
-    });
+    }).save();
 
-    await db.persistAndFlush(user).catch(console.error);
     req.session!.userId = user.id;
 
     return {
@@ -87,11 +88,11 @@ export class UserResolver {
   async login(
     @Arg('usernameOrEmail') usernameOrEmail: string,
     @Arg('password') password: string,
-    @Ctx() { db, req }: DbContext
-  ): Promise<UserResponse | null> {
+    @Ctx() { req }: MyContext
+  ): Promise<UserResponse | undefined> {
     const user = usernameOrEmail.includes('@')
-      ? await db.findOne(User, { email: usernameOrEmail })
-      : await db.findOne(User, { username: usernameOrEmail });
+      ? await User.findOne({ where: { email: usernameOrEmail } })
+      : await User.findOne({ where: { username: usernameOrEmail } });
 
     const validPassword = user
       ? await argon2
@@ -117,9 +118,9 @@ export class UserResolver {
   // M . logout: () -> Boolean
   // ----------------------------------------------------------------------- //
   @Mutation(() => Boolean)
-  logout(@Ctx() { req, res }: DbContext) {
+  logout(@Ctx() { req, res }: MyContext) {
     return new Promise((resolve) =>
-      req.session?.destroy((err) => {
+      req.session?.destroy((err: any) => {
         res.clearCookie(COOKIE_NAME);
         err && console.log('something went boom', err);
         return err ? resolve(false) : resolve(true);
@@ -133,9 +134,9 @@ export class UserResolver {
   @Mutation(() => Boolean)
   async forgotPassword(
     @Arg('email') email: string,
-    @Ctx() { db, redis, req }: DbContext
+    @Ctx() { redis }: MyContext
   ) {
-    const user = await this.getLoggedInUser(db, req);
+    const user = await User.findOne({ where: { email } });
     if (!user) {
       return true;
     }
@@ -158,12 +159,11 @@ export class UserResolver {
   async updatePassword(
     @Arg('token') token: string,
     @Arg('password') password: string,
-    @Ctx() { db, redis, req }: DbContext
+    @Ctx() { redis, req }: MyContext
   ) {
-    console.log(redis);
     const redisUserId = await redis.get(FORGET_PASSWORD_PREFIX + token);
     const id = redisUserId ? Number(redisUserId) : -1;
-    const user = await db.findOne(User, { id });
+    const user = await User.findOne({ id });
 
     const v = registerValidations();
     const valid = v.validateCustom([
@@ -176,13 +176,8 @@ export class UserResolver {
     }
 
     const hash = await argon2.hash(password.trim());
-    const updatedUser = db.nativeUpdate(
-      User,
-      { id: user.id },
-      { password: hash }
-    );
+    const updatedUser = await User.update({ id: user.id }, { password: hash });
 
-    await db.persistAndFlush(updatedUser).catch(console.error);
     req.session!.userId = user.id;
     redis.del(FORGET_PASSWORD_PREFIX + token);
 

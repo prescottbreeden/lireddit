@@ -13,8 +13,8 @@ export const registerValidations = () =>
       },
       {
         errorMessage: 'Username is already taken',
-        validation: (_, dbData: User | null) => {
-          return dbData === null;
+        validation: (_, dbData: User | undefined) => {
+          return dbData === undefined;
         },
       },
     ],
@@ -27,8 +27,8 @@ export const registerValidations = () =>
       },
       {
         errorMessage: 'Email is already registered',
-        validation: (_, dbData: User | null) => {
-          return dbData === null;
+        validation: (_, dbData: User | undefined) => {
+          return dbData === undefined;
         },
       },
     ],
@@ -43,7 +43,7 @@ export const registerValidations = () =>
     token: [
       {
         errorMessage: 'Invalid User Credentials',
-        validation: (redisId: number, user: User | null) => {
+        validation: (redisId: number, user: User | undefined) => {
           return user ? user.id === redisId : false;
         },
       },
