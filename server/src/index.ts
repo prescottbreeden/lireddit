@@ -51,6 +51,7 @@ const main = async () => {
       db: orm.em,
       req,
       res,
+      redis,
     }),
   });
   apolloServer.applyMiddleware({

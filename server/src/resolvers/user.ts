@@ -160,13 +160,15 @@ export class UserResolver {
     @Arg('password') password: string,
     @Ctx() { db, redis, req }: DbContext
   ) {
-    const user = await this.getLoggedInUser(db, req);
+    console.log(redis);
     const redisUserId = await redis.get(FORGET_PASSWORD_PREFIX + token);
+    const id = redisUserId ? Number(redisUserId) : -1;
+    const user = await db.findOne(User, { id });
 
     const v = registerValidations();
     const valid = v.validateCustom([
       { key: 'password', value: password, state: null },
-      { key: 'token', value: Number(redisUserId), state: user },
+      { key: 'token', value: id, state: user },
     ]);
 
     if (!valid || !user) {
@@ -181,6 +183,8 @@ export class UserResolver {
     );
 
     await db.persistAndFlush(updatedUser).catch(console.error);
+    req.session!.userId = user.id;
+    redis.del(FORGET_PASSWORD_PREFIX + token);
 
     return {
       updatedUser,
