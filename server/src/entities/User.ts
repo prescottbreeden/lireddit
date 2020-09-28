@@ -5,7 +5,9 @@ import {
   Column,
   CreateDateColumn,
   BaseEntity,
+  OneToMany,
 } from 'typeorm';
+import { Post } from './Post';
 
 @ObjectType({ description: 'Users of lireddit' })
 @Entity()
@@ -32,4 +34,7 @@ export class User extends BaseEntity {
 
   @Column()
   password!: string;
+
+  @OneToMany(() => Post, (post) => post.creator)
+  posts: Post[];
 }

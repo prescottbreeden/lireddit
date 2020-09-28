@@ -8,31 +8,11 @@ import { loginValidations } from '../validations/definitions/loginValidations';
 import { trimData } from '../util/normalizeData';
 import { sendEmail } from '../util/sendEmail';
 import { v4 } from 'uuid';
-import { Request } from 'express';
 import argon2 from 'argon2';
+import { BaseResolver } from './base';
 
 @Resolver()
-export class UserResolver {
-  /**
-   *  Returns the ID of the currently logged in user or 0.
-   *  @param req express request object
-   *  @return number
-   */
-  private getLoggedInUserID = (req: Request) => {
-    return req.session?.userId ? Number(req.session.userId) : 0;
-  };
-
-  /**
-   *  Returns the currently logged in user or null.
-   *  @param User.orm entity manager
-   *  @param req express request object
-   *  @return User or null
-   */
-  private getLoggedInUser = async (req: Request) => {
-    const id = this.getLoggedInUserID(req);
-    return await User.findOne(id);
-  };
-
+export class UserResolver extends BaseResolver {
   // ----------------------------------------------------------------------- //
   // Q . me: () -> User | null
   // ----------------------------------------------------------------------- //
@@ -54,8 +34,6 @@ export class UserResolver {
 
     const usernameExists = await User.findOne({ username });
     const emailExists = await User.findOne({ email });
-    console.log('uname: ', usernameExists);
-    console.log('email: ', emailExists);
 
     const v = registerValidations();
     const valid = v.validateCustom([

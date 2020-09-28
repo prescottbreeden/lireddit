@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Field, InputType, ObjectType } from 'type-graphql';
 import { User } from './entities/User';
 import { Redis } from 'ioredis';
+import { Post } from './entities/Post';
 
 export type MyContext = {
   redis: Redis;
@@ -28,6 +29,15 @@ export class UserResponse {
 
   @Field(() => User, { nullable: true })
   user?: User;
+}
+
+@ObjectType()
+export class PostResponse {
+  @Field(() => [FieldError], { nullable: true })
+  errors?: FieldError[];
+
+  @Field(() => Post, { nullable: true })
+  post?: Post;
 }
 
 @ObjectType()
