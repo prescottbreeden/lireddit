@@ -31,6 +31,15 @@ export class UserResponse {
   user?: User;
 }
 
+@InputType()
+export class PostInput {
+  @Field()
+  title: string;
+
+  @Field()
+  text: string;
+}
+
 @ObjectType()
 export class PostResponse {
   @Field(() => [FieldError], { nullable: true })

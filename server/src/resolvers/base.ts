@@ -7,7 +7,7 @@ export class BaseResolver {
    *  @param req express request object
    *  @return number
    */
-  getLoggedInUserID = (req: Request) => {
+  protected getLoggedInUserID = (req: Request) => {
     return req.session?.userId ? Number(req.session.userId) : 0;
   };
 
@@ -17,7 +17,7 @@ export class BaseResolver {
    *  @param req express request object
    *  @return User or null
    */
-  getLoggedInUser = async (req: Request) => {
+  protected getLoggedInUser = async (req: Request) => {
     const id = this.getLoggedInUserID(req);
     return await User.findOne(id);
   };

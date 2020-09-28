@@ -5,25 +5,14 @@ import {
   Query,
   Resolver,
   Mutation,
-  InputType,
-  Field,
   Ctx,
   UseMiddleware,
 } from 'type-graphql';
-import { MyContext, PostResponse } from '../types';
+import { MyContext, PostResponse, PostInput } from '../types';
 import { BaseResolver } from './base';
 import { createPostValidations } from '../validations/definitions/createPost.validations';
 import { createAPIErrors } from '../util/createApiErrors';
 import { isAuth } from '../middleware/isAuth';
-
-@InputType()
-class PostInput {
-  @Field()
-  title: string;
-
-  @Field()
-  text: string;
-}
 
 @Resolver()
 export class PostResolver extends BaseResolver {
@@ -44,17 +33,13 @@ export class PostResolver extends BaseResolver {
     @Ctx() { req }: MyContext
   ): Promise<PostResponse | undefined> {
     const v = createPostValidations();
-    const creatorId = this.getLoggedInUserID(req);
-    const valid = v.validateCustom([
-      { key: 'creatorId', value: creatorId, state: null },
-      { key: 'title', value: input.title, state: input },
-      { key: 'text', value: input.text, state: input },
-    ]);
+    const valid = v.validateAll(input);
 
     if (!valid) {
       return { errors: createAPIErrors(v.validationState) };
     }
 
+    const creatorId = this.getLoggedInUserID(req);
     const post = await Post.create({
       ...input,
       creatorId,

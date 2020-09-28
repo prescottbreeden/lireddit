@@ -1,16 +1,8 @@
-import { Post } from '../../entities/Post';
 import { Validation } from '../Validate';
+import { PostInput } from '../../types';
 
 export const createPostValidations = () =>
-  new Validation<Post>({
-    creatorId: [
-      {
-        errorMessage: 'Not authorized.',
-        validation: (id: number | undefined, _) => {
-          return id ? id > 0 : false;
-        },
-      },
-    ],
+  new Validation<PostInput>({
     title: [
       {
         errorMessage: 'Title is required.',
