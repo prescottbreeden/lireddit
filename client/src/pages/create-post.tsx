@@ -29,7 +29,7 @@ const CreatePost: React.FC<CreatePostProps> = () => {
           <Form>
             <InputField name="title" label="Post Title" />
             <Box mt={4}>
-              <InputField name="text" label="Write your Post" />
+              <InputField name="text" textarea label="Write your Post" />
             </Box>
             <Button
               isLoading={isSubmitting}
