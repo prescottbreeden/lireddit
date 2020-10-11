@@ -8,8 +8,8 @@ import { loginValidations } from '../validations/definitions/loginValidations';
 import { trimData } from '../util/normalizeData';
 import { sendEmail } from '../util/sendEmail';
 import { v4 } from 'uuid';
-import argon2 from 'argon2';
 import { BaseResolver } from './base';
+import argon2 from 'argon2';
 
 @Resolver()
 export class UserResolver extends BaseResolver {
