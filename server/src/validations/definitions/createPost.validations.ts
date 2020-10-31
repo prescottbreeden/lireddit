@@ -1,4 +1,4 @@
-import { Validation } from '../Validate';
+import { Validation } from 'de-formed-validations';
 import { PostInput } from '../../types';
 
 export const createPostValidations = () =>

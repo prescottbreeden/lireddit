@@ -1,5 +1,5 @@
+import { Validation } from 'de-formed-validations';
 import { User } from '../../entities/User';
-import { Validation } from '../Validate';
 
 export const loginValidations = () =>
   new Validation<User>({

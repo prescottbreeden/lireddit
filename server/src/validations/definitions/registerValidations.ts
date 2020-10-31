@@ -1,6 +1,6 @@
+import { Validation } from 'de-formed-validations';
 import { User } from '../../entities/User';
 import { validEmail } from '../../util/utilities';
-import { Validation } from '../Validate';
 
 export const registerValidations = () =>
   new Validation<User>({
